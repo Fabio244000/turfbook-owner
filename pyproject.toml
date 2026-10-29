@@ -39,7 +39,7 @@ ignore_missing_imports = true
 exclude = ["^alembic/"]
 
 [[tool.mypy.overrides]]
-module = ["app.infrastructure.*", "config.*"]
+module = ["app.owner_profile.infrastructure.*", "config.*"]
 disable_error_code = ["misc", "no-any-return", "untyped-decorator", "call-arg"]
 
 [[tool.mypy.overrides]]
@@ -52,6 +52,3 @@ disable_error_code = ["attr-defined", "no-untyped-call"]
 [tool.pytest.ini_options]
 addopts = "--ignore=alembic"
 asyncio_mode = "auto"
-filterwarnings = [
-    "ignore::sqlalchemy.exc.SAWarning",
-]

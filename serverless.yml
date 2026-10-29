@@ -1,0 +1,41 @@
+service: turfbook-owner
+frameworkVersion: '~4.43.0'
+
+provider:
+  name: aws
+  runtime: python3.12
+  architecture: arm64
+  region: us-east-1
+  logRetentionInDays: 7
+  stackTags:
+    project: turfbook
+    service: turfbook-owner
+    stage: ${sls:stage}
+  httpApi:
+    payload: '2.0'
+  iam:
+    role:
+      mode: perFunction
+      permissionsBoundary: arn:aws:iam::${aws:accountId}:policy/turfbook-lambda-boundary
+  environment: ${file(./deploy/env/${sls:stage}.yml)}
+
+custom:
+  pythonRequirements:
+    fileName: requirements/base.txt
+    layer: true
+    dockerizePip: true
+
+package:
+  patterns:
+    - '!./**'
+    - 'app/**'
+    - 'config/**'
+
+functions:
+  api:
+    handler: app.owner_profile.main.handler
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    timeout: 29
+    events:
+      - httpApi: '*'
