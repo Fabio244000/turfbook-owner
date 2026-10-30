@@ -19,6 +19,22 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: turfbook
+          POSTGRES_PASSWORD: turfbook
+          POSTGRES_DB: owner
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql+psycopg://turfbook:turfbook@localhost:5432/owner
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -38,6 +54,16 @@ jobs:
 
       - name: Pre-commit hooks
         run: pre-commit run --all-files --show-diff-on-failure
+
+      # A throwaway public key for this run only: Settings requires one.
+      - name: Session token key (CI only)
+        run: |
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out "$RUNNER_TEMP/jwt.pem"
+          openssl pkey -in "$RUNNER_TEMP/jwt.pem" -pubout -out "$RUNNER_TEMP/jwt.pub.pem"
+          { echo 'JWT_PUBLIC_KEY<<EOF'; cat "$RUNNER_TEMP/jwt.pub.pem"; echo 'EOF'; } >> "$GITHUB_ENV"
+
+      - name: Migrations
+        run: alembic upgrade head
 
       - name: Tests
         run: pytest

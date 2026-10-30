@@ -1,6 +1,13 @@
 service: turfbook-owner
 frameworkVersion: '~4.43.0'
 
+stages:
+  default:
+    params:
+      privateSubnetA: subnet-0163ffcf34770d937
+      privateSubnetB: subnet-0f44784a3de31da43
+      lambdaDbSecurityGroup: sg-094dae12950b8a2e9
+
 provider:
   name: aws
   runtime: python3.12
@@ -13,6 +20,12 @@ provider:
     stage: ${sls:stage}
   httpApi:
     payload: '2.0'
+  vpc:
+    subnetIds:
+      - ${param:privateSubnetA}
+      - ${param:privateSubnetB}
+    securityGroupIds:
+      - ${param:lambdaDbSecurityGroup}
   iam:
     role:
       mode: perFunction
@@ -30,6 +43,8 @@ package:
     - '!./**'
     - 'app/**'
     - 'config/**'
+    - 'alembic/**'
+    - 'alembic.ini'
 
 functions:
   api:
@@ -39,3 +54,12 @@ functions:
     timeout: 29
     events:
       - httpApi: '*'
+
+  migrate:
+    handler: app.migrations.handler.handler
+    layers:
+      - Ref: PythonRequirementsLambdaLayer
+    timeout: 30
+    maximumRetryAttempts: 0
+
+resources: ${file(./deploy/resources/migrations.yml)}

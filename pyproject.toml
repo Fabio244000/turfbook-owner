@@ -52,3 +52,6 @@ disable_error_code = ["attr-defined", "no-untyped-call"]
 [tool.pytest.ini_options]
 addopts = "--ignore=alembic"
 asyncio_mode = "auto"
+filterwarnings = [
+    "ignore::sqlalchemy.exc.SAWarning",
+]
