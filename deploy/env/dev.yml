@@ -1,1 +1,9 @@
-API_PREFIX: /api
+JWT_PUBLIC_KEY: ${ssm:/turfbook/owner/dev/jwt_public_key}
+DATABASE_URL:
+  Fn::Sub:
+    - 'postgresql+psycopg://${DbUser}:${DbPassword}@${DbHost}:${DbPort}/${DbName}'
+    - DbUser: '{{resolve:secretsmanager:turfbook/owner/dev/db:SecretString:username}}'
+      DbPassword: '{{resolve:secretsmanager:turfbook/owner/dev/db:SecretString:password}}'
+      DbName: '{{resolve:secretsmanager:turfbook/owner/dev/db:SecretString:dbname}}'
+      DbHost: ${ssm:/turfbook/dev/db_host}
+      DbPort: ${ssm:/turfbook/dev/db_port}
