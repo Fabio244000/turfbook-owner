@@ -3,7 +3,7 @@ from typing import Self
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from app.owner_profile.domain.ports.output.unit_of_work_port import UnitOfWorkPort
+from app.owner_profile.domain.ports.driven.unit_of_work_port import UnitOfWorkPort
 from app.owner_profile.infrastructure.database.constraint_errors import (
     to_domain_error,
 )

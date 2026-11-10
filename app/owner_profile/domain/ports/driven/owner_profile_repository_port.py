@@ -11,6 +11,10 @@ class OwnerProfileRepositoryPort(ABC):
         """Stores the profile together with its identity documents."""
 
     @abstractmethod
+    async def get_by_user_uuid(self, user_uuid: UUID) -> OwnerProfile | None:
+        """The user's profile with its identity documents, or None."""
+
+    @abstractmethod
     async def exists_by_user_uuid(self, user_uuid: UUID) -> bool: ...
 
     @abstractmethod

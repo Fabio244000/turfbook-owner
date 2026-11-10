@@ -37,3 +37,16 @@ class RegisterOwnerProfileData(BaseModel):
     identity_documents: list[IdentityDocumentResponse]
     address: str | None
     created_at: datetime
+
+
+class GetOwnerProfileData(BaseModel):
+    """The same fields the registration returns, read from OwnerProfileDetails."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    uuid: UUID
+    user_uuid: UUID
+    ruc: str
+    identity_documents: list[IdentityDocumentResponse]
+    address: str | None
+    created_at: datetime

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Self
 
-from app.owner_profile.domain.ports.output.owner_profile_repository_port import (
+from app.owner_profile.domain.ports.driven.owner_profile_repository_port import (
     OwnerProfileRepositoryPort,
 )
 

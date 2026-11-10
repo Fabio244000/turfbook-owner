@@ -48,6 +48,32 @@ class TestOwnerProfileRepositoryAdd:
         assert stored[2] is None
 
 
+class TestOwnerProfileRepositoryGet:
+    async def test_gets_the_profile_of_the_user_with_its_documents(
+        self, session, new_owner_profile, insert_owner_profile
+    ):
+        profile = new_owner_profile()
+        await insert_owner_profile(new_owner_profile())
+        await insert_owner_profile(profile)
+
+        stored = await OwnerProfileRepository(session).get_by_user_uuid(
+            profile.user_uuid
+        )
+
+        assert stored == profile
+
+    async def test_gets_nothing_for_a_user_without_profile(
+        self, session, new_owner_profile, insert_owner_profile
+    ):
+        await insert_owner_profile(new_owner_profile())
+
+        stored = await OwnerProfileRepository(session).get_by_user_uuid(
+            new_owner_profile().user_uuid
+        )
+
+        assert stored is None
+
+
 class TestOwnerProfileRepositoryExists:
     async def test_finds_a_user_that_has_a_profile(
         self, session, new_owner_profile, insert_owner_profile
