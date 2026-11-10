@@ -3,10 +3,17 @@ from uuid import UUID
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
+from app.owner_profile.application.ports.driving.get_owner_profile_port import (
+    GetOwnerProfilePort,
+)
+from app.owner_profile.application.use_cases.get_owner_profile import (
+    GetOwnerProfileUseCase,
+)
 from app.owner_profile.application.use_cases.register_owner_profile import (
     RegisterOwnerProfileUseCase,
 )
 from app.owner_profile.domain.exceptions import InvalidSessionTokenError
+from app.owner_profile.domain.ports.driven.unit_of_work_port import UnitOfWorkPort
 from app.owner_profile.domain.ports.input.register_owner_profile_port import (
     RegisterOwnerProfilePort,
 )
@@ -14,7 +21,6 @@ from app.owner_profile.domain.ports.output.clock_port import ClockPort
 from app.owner_profile.domain.ports.output.session_token_verifier_port import (
     SessionTokenVerifierPort,
 )
-from app.owner_profile.domain.ports.output.unit_of_work_port import UnitOfWorkPort
 from app.owner_profile.infrastructure.api.messages import SIGN_IN_REQUIRED
 from app.owner_profile.infrastructure.clock.system_clock import SystemClock
 from app.owner_profile.infrastructure.database.session import async_session
@@ -62,3 +68,9 @@ def get_register_owner_profile_use_case(
     clock: ClockPort = Depends(get_clock),
 ) -> RegisterOwnerProfilePort:
     return RegisterOwnerProfileUseCase(uow=uow, clock=clock)
+
+
+def get_get_owner_profile_use_case(
+    uow: UnitOfWorkPort = Depends(get_unit_of_work),
+) -> GetOwnerProfilePort:
+    return GetOwnerProfileUseCase(uow=uow)

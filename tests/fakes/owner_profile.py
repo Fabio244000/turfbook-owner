@@ -4,11 +4,11 @@ from uuid import UUID
 
 from app.owner_profile.domain.entities.identity_document import DocumentType
 from app.owner_profile.domain.entities.owner_profile import OwnerProfile
-from app.owner_profile.domain.ports.output.clock_port import ClockPort
-from app.owner_profile.domain.ports.output.owner_profile_repository_port import (
+from app.owner_profile.domain.ports.driven.owner_profile_repository_port import (
     OwnerProfileRepositoryPort,
 )
-from app.owner_profile.domain.ports.output.unit_of_work_port import UnitOfWorkPort
+from app.owner_profile.domain.ports.driven.unit_of_work_port import UnitOfWorkPort
+from app.owner_profile.domain.ports.output.clock_port import ClockPort
 
 
 class FakeOwnerProfileRepository(OwnerProfileRepositoryPort):
@@ -20,6 +20,16 @@ class FakeOwnerProfileRepository(OwnerProfileRepositoryPort):
 
     async def add(self, profile: OwnerProfile) -> None:
         self.profiles.append(deepcopy(profile))
+
+    async def get_by_user_uuid(self, user_uuid: UUID) -> OwnerProfile | None:
+        return next(
+            (
+                deepcopy(profile)
+                for profile in self.profiles
+                if profile.user_uuid == user_uuid
+            ),
+            None,
+        )
 
     async def exists_by_user_uuid(self, user_uuid: UUID) -> bool:
         return any(profile.user_uuid == user_uuid for profile in self.profiles)

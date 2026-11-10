@@ -1,10 +1,14 @@
 import logging
 from typing import Any
 
-from fastapi import Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from app.owner_profile.application.exceptions import (
+    ApplicationError,
+    OwnerProfileNotFoundError,
+)
 from app.owner_profile.domain.exceptions import (
     DomainError,
     DuplicateDocumentNumberError,
@@ -29,12 +33,18 @@ from app.owner_profile.infrastructure.api.messages import (
     UNEXPECTED_ERROR_LOG,
 )
 from app.owner_profile.infrastructure.api.schemas.api_response import (
-    ApiResponse,
+    ApiErrorResponse,
     FieldError,
 )
 
 logger = logging.getLogger(__name__)
 
+# Errors of the use cases written since 2026-11-09 (application errors).
+APPLICATION_STATUS_MAP: dict[type[ApplicationError], int] = {
+    OwnerProfileNotFoundError: 404,
+}
+
+# Errors of the use cases written before 2026-11-09 (domain errors), while they exist.
 STATUS_MAP: dict[type[DomainError], int] = {
     InvalidOwnerProfileError: 422,
     InvalidSessionTokenError: 401,
@@ -75,6 +85,12 @@ async def domain_error_handler(request: Request, exc: Exception) -> JSONResponse
     return _response(status_code, message)
 
 
+async def application_error_handler(request: Request, exc: Exception) -> JSONResponse:
+    if not isinstance(exc, ApplicationError) or type(exc) not in APPLICATION_STATUS_MAP:
+        return await unexpected_error_handler(request, exc)
+    return _response(APPLICATION_STATUS_MAP[type(exc)], exc.message)
+
+
 async def request_validation_handler(request: Request, exc: Exception) -> JSONResponse:
     errors = list(exc.errors()) if isinstance(exc, RequestValidationError) else []
     if any(error['type'] == 'json_invalid' for error in errors):
@@ -85,6 +101,14 @@ async def request_validation_handler(request: Request, exc: Exception) -> JSONRe
 async def unexpected_error_handler(request: Request, exc: Exception) -> JSONResponse:
     logger.exception(UNEXPECTED_ERROR_LOG, exc_info=exc)
     return _response(500, UNEXPECTED_ERROR)
+
+
+def register_exception_handlers(app: FastAPI) -> None:
+    """Every error of the API is answered with the same envelope."""
+    app.add_exception_handler(ApplicationError, application_error_handler)
+    app.add_exception_handler(DomainError, domain_error_handler)
+    app.add_exception_handler(RequestValidationError, request_validation_handler)
+    app.add_exception_handler(Exception, unexpected_error_handler)
 
 
 def _structure_error(error: dict[str, Any]) -> FieldError:
@@ -108,5 +132,5 @@ def _invalid_fields(errors: list[FieldError]) -> JSONResponse:
 def _response(
     status_code: int, message: str, detail: list[FieldError] | None = None
 ) -> JSONResponse:
-    body: ApiResponse[None] = ApiResponse(message=message, detail=detail)
+    body = ApiErrorResponse(message=message, detail=detail)
     return JSONResponse(status_code=status_code, content=body.model_dump())

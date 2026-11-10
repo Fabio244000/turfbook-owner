@@ -229,6 +229,9 @@ class TestRegisterOwnerProfileAddress:
             pytest.param('Ayacucho-   -Ayacucho:Jr. Lima', id='blank part'),
             pytest.param('Ayacucho-Huamanga-Ayacucho:', id='empty street'),
             pytest.param('Ayacucho-Huamanga-Ayacucho:   ', id='blank street'),
+            pytest.param(
+                'Ayacucho-Huamanga-Ayacucho: ', id='street of a non-breaking space'
+            ),
             pytest.param('', id='empty'),
         ],
     )
@@ -236,6 +239,14 @@ class TestRegisterOwnerProfileAddress:
         errors = await _assert_rejected(FakeUnitOfWork(), address=address)
 
         assert errors == [(InvalidAddressError, INVALID_ADDRESS)]
+
+    async def test_accepts_parts_and_a_street_that_start_with_any_space(self) -> None:
+        address = 'Ayacucho-\tHuamanga-Ayacucho: Jr. Lima 123'
+        uow = FakeUnitOfWork()
+
+        profile = await _register(uow).execute(**_valid_input(address=address))
+
+        assert profile.address == address
 
     async def test_accepts_an_address_of_400_characters(self) -> None:
         address = 'Ayacucho-Huamanga-Ayacucho:'.ljust(400, 'x')

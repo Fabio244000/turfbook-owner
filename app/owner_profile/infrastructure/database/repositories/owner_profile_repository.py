@@ -2,13 +2,14 @@ from uuid import UUID
 
 from sqlalchemy import ColumnElement, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.owner_profile.domain.entities.identity_document import (
     DocumentType,
     IdentityDocument,
 )
 from app.owner_profile.domain.entities.owner_profile import OwnerProfile
-from app.owner_profile.domain.ports.output.owner_profile_repository_port import (
+from app.owner_profile.domain.ports.driven.owner_profile_repository_port import (
     OwnerProfileRepositoryPort,
 )
 from app.owner_profile.infrastructure.database.models import (
@@ -23,6 +24,15 @@ class OwnerProfileRepository(OwnerProfileRepositoryPort):
 
     async def add(self, profile: OwnerProfile) -> None:
         self._session.add(self._to_model(profile))
+
+    async def get_by_user_uuid(self, user_uuid: UUID) -> OwnerProfile | None:
+        query = (
+            select(OwnerProfileModel)
+            .where(OwnerProfileModel.user_uuid == user_uuid)
+            .options(selectinload(OwnerProfileModel.identity_documents))
+        )
+        model = (await self._session.execute(query)).scalar_one_or_none()
+        return self._to_entity(model) if model else None
 
     async def exists_by_user_uuid(self, user_uuid: UUID) -> bool:
         return await self._exists(OwnerProfileModel.user_uuid == user_uuid)
@@ -55,6 +65,30 @@ class OwnerProfileRepository(OwnerProfileRepositoryPort):
                 self._document_to_model(document)
                 for document in profile.identity_documents
             ],
+        )
+
+    def _to_entity(self, model: OwnerProfileModel) -> OwnerProfile:
+        return OwnerProfile(
+            uuid=model.uuid,
+            user_uuid=model.user_uuid,
+            ruc=model.ruc,
+            address=model.address,
+            created_at=model.created_at,
+            updated_at=model.updated_at,
+            identity_documents=[
+                self._document_to_entity(document)
+                for document in model.identity_documents
+            ],
+        )
+
+    @staticmethod
+    def _document_to_entity(model: IdentityDocumentModel) -> IdentityDocument:
+        return IdentityDocument(
+            uuid=model.uuid,
+            document_type=DocumentType(model.document_type),
+            document_number=model.document_number,
+            is_default=model.is_default,
+            created_at=model.created_at,
         )
 
     @staticmethod

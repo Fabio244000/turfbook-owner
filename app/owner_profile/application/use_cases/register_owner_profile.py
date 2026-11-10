@@ -12,11 +12,11 @@ from app.owner_profile.domain.exceptions import (
     DuplicateRucError,
     OwnerProfileAlreadyExistsError,
 )
+from app.owner_profile.domain.ports.driven.unit_of_work_port import UnitOfWorkPort
 from app.owner_profile.domain.ports.input.register_owner_profile_port import (
     RegisterOwnerProfilePort,
 )
 from app.owner_profile.domain.ports.output.clock_port import ClockPort
-from app.owner_profile.domain.ports.output.unit_of_work_port import UnitOfWorkPort
 
 
 class RegisterOwnerProfileUseCase(RegisterOwnerProfilePort):
