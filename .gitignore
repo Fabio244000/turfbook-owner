@@ -5,30 +5,26 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-
-# Entorno
-.env
 .venv/
 
-# Conda
-# (el env vive fuera del repo, pero por si acaso)
+# Test data
+.coverage
+.testmondata
+
+# Local configuration: only .env.example is versioned
+.env
+.env.*
+!.env.example
 
 # IDE
 .idea/
 .vscode/
 
-# Docker
-# (los volúmenes viven en Docker, no en el repo)
-
-# Cluade
-CLAUDE.md
-
 # Node / Serverless
 node_modules/
 .serverless/
 
-# Tickets (local only)
-tickets/
-
-# Task lists (local only)
-docs/
+# Framework files (local only)
+/CLAUDE.md
+/tickets/
+/docs/

@@ -39,12 +39,12 @@ from app.owner_profile.infrastructure.api.schemas.api_response import (
 
 logger = logging.getLogger(__name__)
 
-# Errors of the use cases written since 2026-11-09 (application errors).
+# Use cases that translate the domain into their own errors (application errors).
 APPLICATION_STATUS_MAP: dict[type[ApplicationError], int] = {
     OwnerProfileNotFoundError: 404,
 }
 
-# Errors of the use cases written before 2026-11-09 (domain errors), while they exist.
+# Use cases that still let domain errors through, until they translate them.
 STATUS_MAP: dict[type[DomainError], int] = {
     InvalidOwnerProfileError: 422,
     InvalidSessionTokenError: 401,

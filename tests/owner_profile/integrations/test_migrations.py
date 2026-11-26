@@ -6,7 +6,7 @@ from alembic.config import Config
 from sqlalchemy import create_engine, inspect, text
 
 from alembic import command
-from app.migrations.handler import ALEMBIC_INIT_PATH
+from app.migrations.handler import ALEMBIC_INI_PATH
 from config.settings import settings
 
 SERVICE_TABLES = {'owner_profiles', 'identity_documents'}
@@ -49,7 +49,7 @@ class TestMigrations:
     def test_upgrade_creates_the_tables_and_downgrade_removes_them(
         self, own_schema: str
     ) -> None:
-        config = Config(str(ALEMBIC_INIT_PATH))
+        config = Config(str(ALEMBIC_INI_PATH))
 
         command.upgrade(config, 'head')
         tables_after_upgrade = _tables(own_schema)

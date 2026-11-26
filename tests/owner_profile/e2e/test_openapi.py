@@ -20,7 +20,7 @@ from app.owner_profile.main import app
 OPENAPI_PATH = '/openapi.json'
 
 # Every published operation (path, method): its request model (if it has a body), its
-# success model and every response code of its contract (the tickets' §5). Every one
+# success model and every response code of its contract. Every one
 # needs the session token.
 OPERATIONS: dict[tuple[str, str], dict[str, Any]] = {
     ('/api/v1/owner-profiles', 'post'): {

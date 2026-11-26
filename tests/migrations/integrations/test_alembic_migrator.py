@@ -11,7 +11,7 @@ from app.migrations.alembic_migrator import (
     DatabaseNotReadyError,
 )
 from app.migrations.custom_resource import handle_migration_event
-from app.migrations.handler import ALEMBIC_INIT_PATH
+from app.migrations.handler import ALEMBIC_INI_PATH
 from config.settings import settings
 from tests.fakes.migrations import FakeResponseSender
 
@@ -30,28 +30,39 @@ class TestAlembicMigrator:
             'RequestId': 'request-123',
             'LogicalResourceId': 'MigrationTrigger',
         }
-        migrator, sender = AlembicMigrator(ALEMBIC_INIT_PATH), FakeResponseSender()
+        migrator = AlembicMigrator(ALEMBIC_INI_PATH, settings.database_url)
+        sender = FakeResponseSender()
 
         handle_migration_event(event, migrator, sender)
         handle_migration_event(event, migrator, sender)
 
         assert [body['Status'] for _, body in sender.sent] == ['SUCCESS', 'SUCCESS']
 
-    def test_reports_a_clear_error_when_the_database_is_not_provisioned(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
-        # Only the configuration changes: the real PostgreSQL answers that the
-        # database does not exist.
-        monkeypatch.setattr(
-            settings, 'database_url', _url_of_a_database_that_does_not_exist()
+    def test_every_migration_can_be_undone_and_applied_again(self) -> None:
+        # The deploy undoes the migrations when it fails: every revision needs a
+        # downgrade() that works. Ends at the head again.
+        migrator = AlembicMigrator(ALEMBIC_INI_PATH, settings.database_url)
+        migrator.upgrade()
+        head = migrator.current()
+
+        assert migrator.downgrade('base') is None
+        migrator.upgrade()
+
+        assert migrator.current() == head
+
+    def test_reports_a_clear_error_when_the_database_is_not_provisioned(self) -> None:
+        # Only the URL changes: the real PostgreSQL answers that the database does
+        # not exist.
+        migrator = AlembicMigrator(
+            ALEMBIC_INI_PATH, _url_of_a_database_that_does_not_exist()
         )
 
         with pytest.raises(DatabaseNotReadyError, match=DATABASE_NOT_READY_MESSAGE):
-            AlembicMigrator(ALEMBIC_INIT_PATH).upgrade()
+            migrator.upgrade()
 
     def test_lets_any_other_error_pass_through(self, tmp_path: Path) -> None:
         ini_without_scripts = tmp_path / 'alembic.ini'
         ini_without_scripts.write_text('[alembic]\n')
 
         with pytest.raises(CommandError, match='script_location'):
-            AlembicMigrator(ini_without_scripts).upgrade()
+            AlembicMigrator(ini_without_scripts, settings.database_url).upgrade()

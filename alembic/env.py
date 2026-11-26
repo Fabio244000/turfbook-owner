@@ -13,16 +13,19 @@ from config.settings import settings
 # access to the values within the .ini file in use.
 config = context.config
 
-# Interpret the config file for Python logging.
-# This line sets up loggers basically.
+# Interpret the config file for Python logging. Loggers that already exist (the
+# service's own) stay enabled: fileConfig disables them by default.
 if config.config_file_name is not None:
-    fileConfig(config.config_file_name)
+    fileConfig(config.config_file_name, disable_existing_loggers=False)
 
 # add your model's MetaData object here
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-config.set_main_option('sqlalchemy.url', settings.database_url)
+# The migrate Lambda passes its URL; the alembic command line falls back to settings.
+config.set_main_option(
+    'sqlalchemy.url', config.attributes.get('database_url', settings.database_url)
+)
 target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
